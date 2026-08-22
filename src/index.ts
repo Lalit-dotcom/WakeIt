@@ -4,12 +4,12 @@ export {
   type WakeItStatus,
   type WakeItState,
   type WakeItProviderProps,
-} from "./wakeIt.context";
+} from "./wakeit.context";
 
-export { WakeItBanner } from "./wakeIt.banner";
+export { WakeItBanner } from "./wakeit.banner";
 
 export {
   defaultWakeItConfig,
   type WakeItConfig,
   type WakeItBannerPosition,
-} from "./wakeIt.config";
+} from "./wakeit.config";

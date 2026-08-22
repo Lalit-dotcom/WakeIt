@@ -1,5 +1,5 @@
-import { useWakeIt } from "./wakeIt.context";
-import type { WakeItBannerPosition } from "./wakeIt.config";
+import { useWakeIt } from "./wakeit.context";
+import type { WakeItBannerPosition } from "./wakeit.config";
 import { Loader2, Zap, CheckCircle2, AlertCircle, RefreshCw, X } from "lucide-react";
 
 const positionClasses: Record<WakeItBannerPosition, string> = {

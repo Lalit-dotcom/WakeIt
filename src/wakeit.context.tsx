@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { defaultWakeItConfig, type WakeItConfig } from "./wakeIt.config";
+import { defaultWakeItConfig, type WakeItConfig } from "./wakeit.config";
 
 export type WakeItStatus = "idle" | "warming" | "ready" | "error";
 
