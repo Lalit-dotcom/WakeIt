@@ -7,6 +7,9 @@
     "types": ["vite/client"],
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
+    "paths": {
+      "wakeit": ["../../src/index.ts"]
+    },
 
     /* Bundler mode */
     "moduleResolution": "bundler",

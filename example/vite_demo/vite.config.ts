@@ -1,9 +1,17 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import path from 'path';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      wakeit: path.resolve(import.meta.dirname, '../../src/index.ts'),
+    },
+  },
   plugins: [
     react(),
+    tailwindcss(),
     {
       name: 'mock-health-server',
       configureServer(server) {
