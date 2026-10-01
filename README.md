@@ -13,11 +13,6 @@
 
 ---
 
-## 📦 Installation
-
-```bash
-npm install wakeit
-```
 
 *Note: Requires `react` and `react-dom` (v18 or v19) as peer dependencies.*
 
