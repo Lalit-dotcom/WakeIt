@@ -5,10 +5,11 @@ import path from 'path';
 
 export default defineConfig({
   resolve: {
-    alias: {
-      wakeit: path.resolve(import.meta.dirname, '../../src/index.ts'),
-    },
+  dedupe: ['react', 'react-dom', 'lucide-react'],
+  alias: {
+    wakeit: path.resolve(import.meta.dirname, '../../src/index.ts'),
   },
+},
   plugins: [
     react(),
     tailwindcss(),

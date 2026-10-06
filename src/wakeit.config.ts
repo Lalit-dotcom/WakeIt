@@ -21,6 +21,11 @@ export type WakeItConfig = {
   maxRetries?: number | "endless";
   /** Delay in milliseconds between retry attempts (default: 5000ms) */
   retryIntervalMs?: number;
+  /**
+   * How long (ms) to keep retrying while the server answers 502/503/504, i.e. the platform
+   * is still booting the container. These retries do NOT count against maxRetries. (default: 90000ms)
+   */
+  bootWindowMs?: number;
   /** Delay in ms before showing banner. If server responds faster, stays silent! (default: 1500ms) */
   showBannerDelayMs?: number;
   /** Timeout in ms before aborting health check request (default: 65000ms for Render) */
@@ -52,6 +57,7 @@ export const defaultWakeItConfig: WakeItConfig = {
   showBannerOnError: false, // Set true if you want red error popups, false to keep UX clean!
   maxRetries: 3, // Set a number like 5, or 'endless' for continuous auto-retries!
   retryIntervalMs: 5000,
+  bootWindowMs: 90000,
   showBannerDelayMs: 1500,
   timeoutMs: 65000,
   autoHideMs: 4000,

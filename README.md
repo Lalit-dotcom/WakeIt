@@ -75,6 +75,7 @@ const customConfig: WakeItConfig = {
   // Retries & Timing
   maxRetries: 3,              // Number of retries (or 'endless' for continuous auto-retries)
   retryIntervalMs: 5000,      // Delay between retry attempts (ms)
+  bootWindowMs: 90000,        // Keep retrying this long (ms) while server answers 502/503/504 (still booting)
   showBannerDelayMs: 1500,    // Delay threshold before popping up banner (ms)
   timeoutMs: 65000,           // Request timeout before aborting ping (ms)
   autoHideMs: 4000,           // Duration before success toast auto-hides (ms)
