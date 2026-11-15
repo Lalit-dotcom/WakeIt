@@ -1,0 +1,44 @@
+# Render Blueprint: the four FREE web services used by the WakeIt cold-start study.
+# Use it with Render Dashboard > New > Blueprint > pick this repository.
+# Every service is plan: free (no card, no charge). Settings match bench/DEPLOY.md.
+# autoDeploy is off so a later git push does not restart a service mid-run;
+# the first deploy still happens when the Blueprint is applied.
+services:
+  # Platform and region measurements
+  - type: web
+    name: wakeit-ref-singapore
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: bench/reference-app
+    buildCommand: npm install --omit=dev
+    startCommand: node index.mjs
+    autoDeploy: false
+  - type: web
+    name: wakeit-ref-oregon
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: bench/reference-app
+    buildCommand: npm install --omit=dev
+    startCommand: node index.mjs
+    autoDeploy: false
+  # WakeIt off/on experiment (identical twins, both Singapore)
+  - type: web
+    name: wakeit-e3-a
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: bench/reference-app
+    buildCommand: npm install --omit=dev
+    startCommand: node index.mjs
+    autoDeploy: false
+  - type: web
+    name: wakeit-e3-b
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: bench/reference-app
+    buildCommand: npm install --omit=dev
+    startCommand: node index.mjs
+    autoDeploy: false
