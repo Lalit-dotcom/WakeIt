@@ -1,5 +1,5 @@
 {
-  "name": "wakeit",
+  "name": "@lalit_kumar/wakeit",
   "version": "1.0.0",
   "description": "An ultra-lightweight, zero-dependency, plug-and-play React pre-warmer tool designed to solve cold-start delays on free-tier backend hosting platforms (Render, Railway, Fly.io, Heroku).",
   "main": "./dist/index.js",

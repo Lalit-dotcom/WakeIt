@@ -1,0 +1,14 @@
+{
+  "name": "wakeit-cold-start-simulator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Express server that behaves like a free-tier PaaS: sleeps when idle, cold-starts on the next request",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}
