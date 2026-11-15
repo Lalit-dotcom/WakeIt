@@ -1,0 +1,16 @@
+[
+  {
+    "name": "render-singapore",
+    "platform": "render",
+    "region": "singapore",
+    "baseUrl": "https://wakeit-ref-singapore.onrender.com",
+    "idleWaitMinutes": 20
+  },
+  {
+    "name": "render-oregon",
+    "platform": "render",
+    "region": "oregon",
+    "baseUrl": "https://wakeit-ref-oregon.onrender.com",
+    "idleWaitMinutes": 20
+  }
+]
