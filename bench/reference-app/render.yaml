@@ -1,0 +1,20 @@
+# Render Blueprint for the reference app: one free web service per region.
+# Copy this file to the repository root before using "New > Blueprint" on Render,
+# or create the services by hand with the same settings (see bench/DEPLOY.md).
+services:
+  - type: web
+    name: wakeit-ref-singapore
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: bench/reference-app
+    buildCommand: npm install --omit=dev
+    startCommand: node index.mjs
+  - type: web
+    name: wakeit-ref-oregon
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: bench/reference-app
+    buildCommand: npm install --omit=dev
+    startCommand: node index.mjs

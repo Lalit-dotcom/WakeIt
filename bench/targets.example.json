@@ -1,0 +1,37 @@
+[
+  {
+    "name": "render-singapore",
+    "platform": "render",
+    "region": "singapore",
+    "baseUrl": "https://YOUR-SERVICE-sg.onrender.com",
+    "idleWaitMinutes": 20
+  },
+  {
+    "name": "render-oregon",
+    "platform": "render",
+    "region": "oregon",
+    "baseUrl": "https://YOUR-SERVICE-or.onrender.com",
+    "idleWaitMinutes": 20
+  },
+  {
+    "name": "koyeb-frankfurt",
+    "platform": "koyeb",
+    "region": "frankfurt",
+    "baseUrl": "https://YOUR-APP.koyeb.app",
+    "idleWaitMinutes": 65
+  },
+  {
+    "name": "railway",
+    "platform": "railway",
+    "region": "CHECK-IN-DASHBOARD",
+    "baseUrl": "https://YOUR-APP.up.railway.app",
+    "idleWaitMinutes": 15
+  },
+  {
+    "name": "fly-singapore",
+    "platform": "fly",
+    "region": "sin",
+    "baseUrl": "https://YOUR-APP.fly.dev",
+    "idleWaitMinutes": 15
+  }
+]

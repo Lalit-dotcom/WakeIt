@@ -1,0 +1,10 @@
+{
+  "name": "wakeit-bench",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Measurement tools for the WakeIt cold-start study. Only the browser experiment (e3-wakeit.mjs) and a11y-check.mjs need the dependency below.",
+  "dependencies": {
+    "playwright": "^1.50.0"
+  }
+}

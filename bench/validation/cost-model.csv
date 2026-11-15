@@ -1,0 +1,7 @@
+scenario,visits_per_day,hours_upper_bound,hours_estimate,share_of_free_hours_pct,services_that_fit
+"Pinger (every 14 min, always awake)","-","720","720","96","1"
+"Woken by visitors only","5","50","48.3","6.4","15"
+"Woken by visitors only","20","200","174.6","23.3","4"
+"Woken by visitors only","50","500","360.5","48.1","2"
+"Woken by visitors only","100","720","540.5","72.1","1"
+"Woken by visitors only","300","720","708.8","94.5","1"

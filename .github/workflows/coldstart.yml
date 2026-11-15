@@ -1,0 +1,44 @@
+# Optional second vantage point: runs the cold-start harness on a GitHub-hosted
+# runner. Start it by hand from the Actions tab. Needs bench/targets.json in
+# the repository. One job may run for at most 6 hours.
+name: Cold-start measurement
+
+on:
+  workflow_dispatch:
+    inputs:
+      session:
+        description: "Session label (for example gha-night1)"
+        required: true
+        default: "gha1"
+      total:
+        description: "Cycles per target (10 fits in the 6-hour limit with 20-minute idle waits)"
+        required: true
+        default: "10"
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Runner details
+        run: |
+          echo "Runner: $RUNNER_NAME ($RUNNER_OS, $RUNNER_ARCH)"
+          curl -s https://ipinfo.io/json | grep -E '"(city|region|country|org)"' || true
+      - name: Run harness
+        run: >
+          node bench/coldstart.mjs
+          --targets bench/targets.json
+          --session "${{ inputs.session }}"
+          --total "${{ inputs.total }}"
+          --vantage github-actions
+          --out bench/results/coldstart.gha.csv
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coldstart-${{ inputs.session }}
+          path: bench/results/coldstart.gha.csv

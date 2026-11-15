@@ -1,0 +1,16 @@
+{
+  "name": "wakeit-reference-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Minimal backend with boot-phase timing, deployed unchanged on every platform in the WakeIt cold-start study",
+  "engines": { "node": ">=20" },
+  "scripts": { "start": "node index.mjs" },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  },
+  "optionalDependencies": {
+    "pg": "^8.13.0"
+  }
+}

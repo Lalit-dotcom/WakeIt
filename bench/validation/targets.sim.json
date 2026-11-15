@@ -1,0 +1,4 @@
+[
+  { "name": "sim-a", "platform": "simulator", "region": "local", "baseUrl": "http://127.0.0.1:4000/a", "idleWaitMinutes": 0.1 },
+  { "name": "sim-b", "platform": "simulator", "region": "local", "baseUrl": "http://127.0.0.1:4000/b", "idleWaitMinutes": 0.1 }
+]
