@@ -24,7 +24,9 @@ For each of the four services:
 8. Leave the health check path empty.
 9. Turn **Auto-Deploy off** after the first deploy, so a later `git push` does not restart the services in the middle of a run.
 
-## Koyeb (free)
+The paper is planned around **Render only**. The sections below for other hosts are optional.
+
+## Koyeb (optional, free)
 
 Documented behaviour: one free web service per organization, only in Frankfurt or Washington, D.C.; it scales to zero after 1 hour without traffic. Koyeb may ask for a card to prevent abuse and states that the free service is never charged.
 

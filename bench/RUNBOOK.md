@@ -69,11 +69,7 @@ node bench/coldstart.mjs --targets bench/targets.json --session day1 --total 10 
 
 That gives 20 cold starts per target. Ten per target (one session) is the minimum.
 
-**Koyeb** waits 65 minutes per cycle, so 10 cycles would take 11 hours. If you deployed it, remove it from `targets.json` and run it in a second PowerShell window from a copy of the file that contains only the Koyeb entry:
-
-```powershell
-node bench/coldstart.mjs --targets bench/targets.koyeb.json --session night1 --total 5 --vantage india-laptop
-```
+The study is planned for **Render only**. `bench/targets.optional.json` holds example entries for Koyeb, Railway and Fly.io in case you add one later; Koyeb needs a 65-minute idle wait, so run it separately with `--total 5`.
 
 If a run stops (power cut, crash), start the **same command again**. It counts the rows already saved for that session and continues.
 
