@@ -1,41 +1,62 @@
 {
   "name": "@lalit_kumar/wakeit",
-  "version": "1.0.0",
-  "description": "An ultra-lightweight, zero-dependency, plug-and-play React pre-warmer tool designed to solve cold-start delays on free-tier backend hosting platforms (Render, Railway, Fly.io, Heroku).",
-  "main": "./dist/index.js",
+  "version": "1.1.0",
+  "description": "A small React library with no runtime dependencies that pre-warms a sleeping backend and tells the user what is happening. For scale-to-zero hosts such as Render, Railway, Fly.io, Koyeb and Heroku.",
+  "type": "module",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.js",
-      "default": "./dist/index.js"
-    }
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
   },
+  "sideEffects": false,
   "files": [
     "dist",
-    "src",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc",
-    "prepare": "npm run build",
-    "test": "vitest run"
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "smoke": "node scripts/smoke.mjs",
+    "size": "node scripts/size.mjs",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build && npm run smoke"
   },
   "keywords": [
     "react",
-    "render",
     "cold-start",
+    "scale-to-zero",
+    "pre-warming",
     "health-check",
-    "backend-warmer",
-    "keep-alive",
-    "server-warmup"
+    "render",
+    "railway",
+    "fly.io",
+    "koyeb",
+    "accessibility"
   ],
-  "author": "",
+  "author": "Lalit Kumar",
   "license": "MIT",
-  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lalit-dotcom/WakeIt.git"
+  },
+  "homepage": "https://github.com/Lalit-dotcom/WakeIt#readme",
+  "bugs": {
+    "url": "https://github.com/Lalit-dotcom/WakeIt/issues"
+  },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0"
@@ -43,15 +64,16 @@
   "devDependencies": {
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "jsdom": "^29.1.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "typescript": "^5.0.0",
-    "vitest": "^5.0.3"
-  },
-  "dependencies": {
-    "lucide-react": "^1.31.0"
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitest/coverage-v8": "^5.1.0",
+    "axe-core": "^4.14.0",
+    "esbuild": "^0.28.2",
+    "jsdom": "^31.0.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tsup": "^9.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.0"
   }
 }

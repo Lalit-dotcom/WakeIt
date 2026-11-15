@@ -7,7 +7,19 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { defaultWakeItConfig, type WakeItConfig } from "./wakeit.config";
+import {
+  defaultWakeItConfig,
+  resolveCacheTtlMs,
+  type WakeItConfig,
+  type WakeItEvent,
+  type WakeItEventType,
+} from "./wakeit.config";
+import {
+  BOOTING_STATUSES,
+  computeRetryDelayMs,
+  isCacheValid,
+  setCacheValid,
+} from "./wakeit.core";
 
 export type WakeItStatus = "idle" | "checking" | "warming" | "ready" | "error";
 
@@ -18,6 +30,8 @@ export type WakeItState = {
   responseTimeMs: number | null;
   retryCount: number;
   bannerVisible: boolean;
+  /** Text for assistive technology; changes when the state is worth announcing. */
+  announcement: string;
   config: WakeItConfig;
   checkBackend: (force?: boolean) => Promise<boolean>;
   dismissBanner: () => void;
@@ -25,46 +39,22 @@ export type WakeItState = {
 
 export type WakeItProviderProps = {
   children: ReactNode;
-  /** Partial or full WakeItConfig override. Falls back to defaultWakeItConfig in wakeit.config.ts */
+  /** Partial or full WakeItConfig override. Falls back to defaultWakeItConfig. */
   config?: WakeItConfig;
-  /** Shorthand for health check endpoint URL */
+  /** Shorthand for the health check endpoint URL */
   healthEndpoint?: string;
 };
 
 const WakeItContext = createContext<WakeItState | null>(null);
 
-const STORAGE_CACHE_KEY = "wakeit_backend_warmup_ts";
-
-/** Platforms answer with these while the container is still booting. */
-const BOOTING_STATUSES = [502, 503, 504];
+/** While the platform reports "booting", never wait longer than this between polls. */
+const BOOT_POLL_MAX_MS = 5000;
 
 class HttpStatusError extends Error {
   status: number;
   constructor(status: number) {
     super(`HTTP status ${status}`);
     this.status = status;
-  }
-}
-
-function isCacheValid(cacheTtlMs: number): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    const stored = localStorage.getItem(STORAGE_CACHE_KEY);
-    if (!stored) return false;
-    const timestamp = parseInt(stored, 10);
-    if (isNaN(timestamp)) return false;
-    return Date.now() - timestamp < cacheTtlMs;
-  } catch {
-    return false;
-  }
-}
-
-function setCacheValid(): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_CACHE_KEY, Date.now().toString());
-  } catch {
-    // Ignore storage errors
   }
 }
 
@@ -91,186 +81,275 @@ export function WakeItProvider({
     configRef.current = mergedConfig;
   });
 
-  const cacheTtlMs = mergedConfig.cacheTtlMs ?? 14 * 60 * 1000;
-
   const [status, setStatus] = useState<WakeItStatus>(() =>
-    isCacheValid(cacheTtlMs) ? "ready" : "idle",
+    isCacheValid(
+      mergedConfig.healthEndpoint || "/api/health",
+      resolveCacheTtlMs(mergedConfig),
+    )
+      ? "ready"
+      : "idle",
   );
   const [responseTimeMs, setResponseTimeMs] = useState<number | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [bannerVisible, setBannerVisible] = useState(false);
+  const [announcement, setAnnouncement] = useState("");
 
+  const statusRef = useRef<WakeItStatus>(status);
   const activeCheckRef = useRef<boolean>(false);
   const currentRetryRef = useRef<number>(0);
-  const retryTimeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bootAttemptRef = useRef<number>(0);
   const autoRetryRef = useRef<boolean>(false); // true only when the retry timer calls runCheck
   const bootStartRef = useRef<number | null>(null); // when we first saw "server is booting"
+  // Every mount gets a new generation; results from an older one are ignored.
+  const generationRef = useRef<number>(0);
+  const controllerRef = useRef<AbortController | null>(null);
+  const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
-  const runCheck = useCallback(async (force = false): Promise<boolean> => {
-    const cfg = configRef.current;
-    const ttl = cfg.cacheTtlMs ?? 14 * 60 * 1000;
+  const later = useCallback((fn: () => void, ms: number) => {
+    const id = setTimeout(() => {
+      timersRef.current.delete(id);
+      fn();
+    }, ms);
+    timersRef.current.add(id);
+    return id;
+  }, []);
 
-    // Cross-tab cache check: if Tab 1 or any tab woke the server within cacheTtlMs (14m), skip network ping!
-    if (isCacheValid(ttl) && !force) {
-      console.log(
-        "⚡ [wakeIt] Server already verified warm by browser session (localStorage). Skipping ping.",
-      );
-      setStatus("ready");
-      return true;
-    }
+  const cancel = useCallback((id: ReturnType<typeof setTimeout> | null) => {
+    if (id === null) return;
+    clearTimeout(id);
+    timersRef.current.delete(id);
+  }, []);
 
-    if (activeCheckRef.current) return false;
-    activeCheckRef.current = true;
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Fresh start (mount or manual Retry click) resets counters; timer-driven retries keep them.
-    const isAutoRetry = autoRetryRef.current;
-    autoRetryRef.current = false;
-    if (!isAutoRetry) {
-      currentRetryRef.current = 0;
-      bootStartRef.current = null;
-      setRetryCount(0);
-    }
+  const runCheck = useCallback(
+    async (force = false): Promise<boolean> => {
+      const cfg = configRef.current;
+      const endpoint = cfg.healthEndpoint || "/api/health";
+      const generation = generationRef.current;
 
-    // While the platform is booting, stay in "warming" instead of flickering back to "checking".
-    setStatus(bootStartRef.current !== null ? "warming" : "checking");
+      const log = (...args: unknown[]) => {
+        if (cfg.debug) console.log("[wakeit]", ...args);
+      };
+      const emit = (
+        type: WakeItEventType,
+        extra: Partial<WakeItEvent> = {},
+      ) => {
+        if (!cfg.onEvent) return;
+        try {
+          cfg.onEvent({
+            type,
+            t: performance.now(),
+            wallTime: Date.now(),
+            endpoint,
+            ...extra,
+          });
+        } catch {
+          // A faulty listener must not break the probe.
+        }
+      };
+      const updateStatus = (next: WakeItStatus) => {
+        if (statusRef.current === next) return;
+        statusRef.current = next;
+        setStatus(next);
+        emit("status_change", { status: next });
+      };
 
-    const delayMs = cfg.showBannerDelayMs ?? 1500;
-    const shouldShowWarmingBanner = cfg.showBannerOnWarmup ?? true;
+      const cacheHit = !force && isCacheValid(endpoint, resolveCacheTtlMs(cfg));
+      if (cacheHit && cfg.verifyCachedState === false) {
+        log("Warm state found in cache. Skipping the probe.");
+        updateStatus("ready");
+        return true;
+      }
+      // A cached warm state is shown at once and confirmed by one quiet probe.
+      const background = cacheHit;
 
-    const showBannerTimer = setTimeout(() => {
-      setStatus("warming");
-      if (shouldShowWarmingBanner) setBannerVisible(true);
-    }, delayMs);
+      if (activeCheckRef.current) return false;
+      activeCheckRef.current = true;
 
-    const startTime = performance.now();
-    const targetUrl = cfg.healthEndpoint || "/api/health";
+      // A fresh start (mount or manual retry) resets counters; timer-driven retries keep them.
+      const isAutoRetry = autoRetryRef.current;
+      autoRetryRef.current = false;
+      if (!isAutoRetry) {
+        currentRetryRef.current = 0;
+        bootAttemptRef.current = 0;
+        bootStartRef.current = null;
+        setRetryCount(0);
+      }
 
-    console.log("⚡ [wakeIt] Initializing health check:", targetUrl);
+      if (background) {
+        updateStatus("ready");
+      } else {
+        // While the platform is booting, stay in "warming" instead of flickering to "checking".
+        updateStatus(bootStartRef.current !== null ? "warming" : "checking");
+      }
 
-    const timeoutMs = cfg.timeoutMs ?? 65000;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      const delayMs = cfg.showBannerDelayMs ?? 1500;
+      const shouldShowWarmingBanner = cfg.showBannerOnWarmup ?? true;
+      const msgs = cfg.messages ?? {};
 
-    try {
-      const response = await fetch(targetUrl, {
-        method: "GET",
-        headers: { Accept: "application/json" },
-        signal: controller.signal,
-      });
+      const showBannerTimer = later(() => {
+        updateStatus("warming");
+        setAnnouncement(
+          [msgs.warming, msgs.warmingSubtext].filter(Boolean).join(" "),
+        );
+        if (shouldShowWarmingBanner) setBannerVisible(true);
+      }, delayMs);
 
-      clearTimeout(timeoutId);
-      clearTimeout(showBannerTimer);
+      const startTime = performance.now();
+      const timeoutMs = cfg.timeoutMs ?? 65000;
+      const controller = new AbortController();
+      controllerRef.current = controller;
+      const timeoutId = later(() => controller.abort(), timeoutMs);
 
-      if (response.ok) {
+      log("Probing", endpoint, background ? "(cache re-check)" : "");
+      emit("probe_start", { background });
+
+      try {
+        const response = await fetch(endpoint, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+
+        if (generation !== generationRef.current) return false;
+        cancel(timeoutId);
+        cancel(showBannerTimer);
+
         const elapsed = Math.round(performance.now() - startTime);
-        console.log(`🟢 [wakeIt] Backend is warm & ready! (${elapsed}ms)`);
+        emit("first_byte", { httpStatus: response.status, elapsedMs: elapsed });
 
-        // Save cross-tab warm status permanently in localStorage
-        setCacheValid();
+        if (!response.ok) throw new HttpStatusError(response.status);
+
+        log(`Backend is ready (${elapsed} ms)`);
+        setCacheValid(endpoint);
 
         const wasBooting = bootStartRef.current !== null;
         const totalMs = wasBooting
           ? Math.round(Date.now() - (bootStartRef.current as number))
           : elapsed;
         bootStartRef.current = null;
+        bootAttemptRef.current = 0;
         currentRetryRef.current = 0;
 
         setResponseTimeMs(totalMs);
-        setStatus("ready");
+        updateStatus("ready");
+        emit("ready", { httpStatus: response.status, elapsedMs: totalMs });
         activeCheckRef.current = false;
 
-        const showSuccessToast = cfg.showSuccessToast ?? true;
-        const autoHideMs = cfg.autoHideMs ?? 4000;
+        const wasSlow = wasBooting || elapsed > delayMs;
+        if (wasSlow) setAnnouncement(msgs.ready ?? "");
 
-        if ((wasBooting || elapsed > delayMs) && showSuccessToast) {
+        const autoHideMs = cfg.autoHideMs ?? 4000;
+        if (wasSlow && (cfg.showSuccessToast ?? true)) {
           setBannerVisible(true);
-          if (autoHideMs > 0) {
-            setTimeout(() => setBannerVisible(false), autoHideMs);
-          }
+          if (autoHideMs > 0) later(() => setBannerVisible(false), autoHideMs);
         } else {
           setBannerVisible(false);
         }
         return true;
-      } else {
-        throw new HttpStatusError(response.status);
-      }
-    } catch (err: unknown) {
-      clearTimeout(timeoutId);
-      clearTimeout(showBannerTimer);
-      console.warn("⚠️ [wakeIt] Health check ping failed:", err);
-      activeCheckRef.current = false;
+      } catch (err: unknown) {
+        // Unmounted (or remounted) while the request was in flight: stay silent.
+        if (generation !== generationRef.current) return false;
+        cancel(timeoutId);
+        cancel(showBannerTimer);
+        activeCheckRef.current = false;
 
-      const retryIntervalMs = cfg.retryIntervalMs ?? 5000;
+        const httpStatus =
+          err instanceof HttpStatusError ? err.status : undefined;
+        log("Probe failed:", httpStatus ?? err);
 
-      // 502/503/504 = platform is still booting the container, not a real failure.
-      const isBooting =
-        err instanceof HttpStatusError && BOOTING_STATUSES.includes(err.status);
-      if (isBooting) {
-        if (bootStartRef.current === null) bootStartRef.current = Date.now();
-        const bootWindowMs = cfg.bootWindowMs ?? 90000;
-        if (Date.now() - bootStartRef.current < bootWindowMs) {
-          setStatus("warming");
-          setBannerVisible(cfg.showBannerOnWarmup ?? true);
-          setRetryCount((c) => c + 1);
-          console.log(
-            `⏳ [wakeIt] Server is booting (${(err as HttpStatusError).status}). Retrying in ${retryIntervalMs}ms...`,
-          );
-          if (retryTimeoutIdRef.current) clearTimeout(retryTimeoutIdRef.current);
-          retryTimeoutIdRef.current = setTimeout(() => {
+        const baseMs = cfg.retryIntervalMs ?? 2000;
+        const maxMs = cfg.retryMaxIntervalMs ?? 15000;
+        const mode = cfg.retryBackoff ?? "exponential";
+
+        const scheduleRetry = (waitMs: number, attempt: number) => {
+          emit("retry_scheduled", { attempt, delayMs: waitMs, httpStatus });
+          cancel(retryTimerRef.current);
+          retryTimerRef.current = later(() => {
             autoRetryRef.current = true;
             runCheck(true);
-          }, retryIntervalMs);
+          }, waitMs);
+        };
+
+        // 502/503/504 = the platform is still booting the container, not a real failure.
+        const isBooting =
+          httpStatus !== undefined && BOOTING_STATUSES.includes(httpStatus);
+        if (isBooting) {
+          if (bootStartRef.current === null) bootStartRef.current = Date.now();
+          const bootWindowMs = cfg.bootWindowMs ?? 90000;
+          if (Date.now() - bootStartRef.current < bootWindowMs) {
+            updateStatus("warming");
+            setAnnouncement(
+              [msgs.warming, msgs.warmingSubtext].filter(Boolean).join(" "),
+            );
+            setBannerVisible(shouldShowWarmingBanner);
+            bootAttemptRef.current += 1;
+            setRetryCount((c) => c + 1);
+            const waitMs = computeRetryDelayMs(
+              bootAttemptRef.current,
+              baseMs,
+              Math.min(maxMs, BOOT_POLL_MAX_MS),
+              mode,
+            );
+            log(`Server is booting (${httpStatus}). Next check in ${waitMs} ms.`);
+            scheduleRetry(waitMs, bootAttemptRef.current);
+            return false;
+          }
+          // Boot window used up: stop retrying.
+          bootStartRef.current = null;
+          log(`Server still not up after ${bootWindowMs} ms. Giving up.`);
+          updateStatus("error");
+          emit("error", { httpStatus });
+          setAnnouncement(msgs.error ?? "");
+          setBannerVisible(cfg.showBannerOnError ?? false);
           return false;
         }
-        // Boot window exhausted: give up for real (no more auto-retries).
-        bootStartRef.current = null;
-        console.log(`❌ [wakeIt] Server still not up after ${bootWindowMs}ms. Giving up.`);
-        setStatus("error");
+
+        updateStatus("error");
         setBannerVisible(cfg.showBannerOnError ?? false);
-        return false;
-      }
 
-      setStatus("error");
+        const maxRetries = cfg.maxRetries ?? 3;
+        const isEndless = maxRetries === "endless";
 
-      const showErrorBanner = cfg.showBannerOnError ?? false;
-      setBannerVisible(showErrorBanner);
-
-      const maxRetries = cfg.maxRetries ?? 3;
-      const isEndless = maxRetries === "endless";
-
-      if (isEndless || currentRetryRef.current < (maxRetries as number)) {
-        currentRetryRef.current += 1;
-        setRetryCount(currentRetryRef.current);
-        const maxText = isEndless ? "Endless" : `${maxRetries}`;
-        console.log(
-          `🔄 [wakeIt] Retrying in ${retryIntervalMs}ms... (Attempt ${currentRetryRef.current}/${maxText})`,
-        );
-
-        if (retryTimeoutIdRef.current) {
-          clearTimeout(retryTimeoutIdRef.current);
+        if (isEndless || currentRetryRef.current < (maxRetries as number)) {
+          currentRetryRef.current += 1;
+          setRetryCount(currentRetryRef.current);
+          const waitMs = computeRetryDelayMs(
+            currentRetryRef.current,
+            baseMs,
+            maxMs,
+            mode,
+          );
+          log(
+            `Retry ${currentRetryRef.current}/${isEndless ? "endless" : maxRetries} in ${waitMs} ms.`,
+          );
+          scheduleRetry(waitMs, currentRetryRef.current);
+        } else {
+          log(`Max retries (${maxRetries}) reached. Stopping.`);
+          setRetryCount(currentRetryRef.current);
+          emit("error", { httpStatus });
+          setAnnouncement(msgs.error ?? "");
         }
 
-        retryTimeoutIdRef.current = setTimeout(() => {
-          autoRetryRef.current = true;
-          runCheck(true);
-        }, retryIntervalMs);
-      } else {
-        console.log(
-          `❌ [wakeIt] Max retries (${maxRetries}) reached. Stopping retries.`,
-        );
-        setRetryCount(currentRetryRef.current);
+        return false;
       }
-
-      return false;
-    }
-  }, []);
+    },
+    [later, cancel],
+  );
 
   useEffect(() => {
     runCheck();
+    const timers = timersRef.current;
     return () => {
-      if (retryTimeoutIdRef.current) {
-        clearTimeout(retryTimeoutIdRef.current);
-      }
+      // Invalidate anything still in flight and stop every pending timer.
+      generationRef.current += 1;
+      controllerRef.current?.abort();
+      timers.forEach((id) => clearTimeout(id));
+      timers.clear();
+      retryTimerRef.current = null;
+      activeCheckRef.current = false;
+      autoRetryRef.current = false;
     };
   }, [runCheck]);
 
@@ -287,6 +366,7 @@ export function WakeItProvider({
         responseTimeMs,
         retryCount,
         bannerVisible,
+        announcement,
         config: mergedConfig,
         checkBackend: runCheck,
         dismissBanner,

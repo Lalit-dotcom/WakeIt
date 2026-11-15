@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { WakeItProvider, WakeItBanner, useWakeIt, type WakeItConfig } from "wakeit";
+import { WakeItProvider, WakeItBanner, useWakeIt, getWakeItCacheKey, type WakeItConfig } from "wakeit";
 
 function StatusCard() {
   const {
@@ -17,7 +17,7 @@ function StatusCard() {
   const [cacheTimestamp, setCacheTimestamp] = useState<string | null>(null);
 
   const updateCacheInfo = () => {
-    const raw = localStorage.getItem("wakeit_backend_warmup_ts");
+    const raw = localStorage.getItem(getWakeItCacheKey(config.healthEndpoint ?? "/api/health"));
     if (raw) {
       const date = new Date(parseInt(raw, 10));
       setCacheTimestamp(date.toLocaleTimeString());
@@ -33,7 +33,7 @@ function StatusCard() {
   }, []);
 
   const clearCache = () => {
-    localStorage.removeItem("wakeit_backend_warmup_ts");
+    localStorage.removeItem(getWakeItCacheKey(config.healthEndpoint ?? "/api/health"));
     updateCacheInfo();
   };
 
@@ -135,7 +135,8 @@ export function App() {
     if (s === "C") {
       // Don't clear cache for C
     } else {
-      localStorage.removeItem("wakeit_backend_warmup_ts");
+      // Warm flags are stored per endpoint, so clear every scenario's flag.
+      Object.values(scenarioEndpoints).forEach((e) => localStorage.removeItem(getWakeItCacheKey(e)));
     }
     setScenario(s);
   };

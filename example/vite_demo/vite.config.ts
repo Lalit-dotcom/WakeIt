@@ -5,7 +5,7 @@ import path from 'path';
 
 export default defineConfig({
   resolve: {
-  dedupe: ['react', 'react-dom', 'lucide-react'],
+  dedupe: ['react', 'react-dom'],
   alias: {
     wakeit: path.resolve(import.meta.dirname, '../../src/index.ts'),
   },

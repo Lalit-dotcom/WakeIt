@@ -1,10 +1,10 @@
 import { StrictMode, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { WakeItProvider, WakeItBanner, useWakeIt } from "wakeit";
+import { WakeItProvider, WakeItBanner, useWakeIt, getWakeItCacheKey } from "wakeit";
 import "./compare.css";
 
 const API = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
-const CACHE_KEY = "wakeit_backend_warmup_ts";
+const CACHE_KEY = getWakeItCacheKey(`${API}/b/api/health`);
 
 type ServerInfo = { bootMs: number; idleMs: number; bootMode: string };
 type Phase = "idle" | "waiting" | "done" | "error";

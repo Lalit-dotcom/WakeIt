@@ -1,100 +1,175 @@
-# ⚡ wakeit — Plug & Play Backend Pre-Warmer
+# WakeIt
 
-**`wakeit`** is an ultra-lightweight, zero runtime dependency, plug-and-play React tool designed to solve cold-start delays on free-tier backend hosting platforms (Render, Railway, Fly.io, Heroku).
+**WakeIt** is a small React library for apps whose backend goes to sleep when idle (Render free tier, Railway Serverless, Fly.io auto-stop, Koyeb free instance, Heroku Eco).
 
----
+When the page loads, WakeIt sends one request to your health endpoint. This starts the server's boot early, while the user is still reading the page. If the server is slow to answer, WakeIt shows a small status badge and lets you keep buttons disabled until the backend is ready.
 
-## ⚡ How It Works (Smart UX)
+WakeIt does **not** make the server boot faster. It overlaps the boot with the time the user spends on the page, and it tells the user what is happening.
 
-1. **Silent Health Check:** When a user lands on your app, `wakeit` silently pings your backend health endpoint.
-2. **Server is Alive (<1.5s):** If the backend responds quickly, **no banner is shown** and warm status is saved to `localStorage`. Zero distraction!
-3. **Server is Sleeping (>1.5s):** Render cold-starts take ~30-50s. After 1.5s (configurable delay), `wakeit` displays a clean floating badge (`⚡ Waking up server...`). Once Render finishes booting, it switches to green (`🟢 Server Warm & Ready!`) and auto-hides!
-4. **Persistent Cross-Tab Cache:** Once verified warm, `wakeit` caches status in `localStorage` (default 14 minutes) so F5 refreshes and new browser tabs skip unnecessary health checks.
+- No runtime dependencies. React 18 or 19 is the only peer dependency.
+- No CSS framework needed: the badge is styled inline.
+- About 4.4 kB minified and gzipped.
+- Screen-reader announcements through an ARIA live region.
+- Ships as ESM and CommonJS with TypeScript types.
 
----
+## Install
 
+```bash
+npm install @lalit_kumar/wakeit
+```
 
-*Note: Requires `react` and `react-dom` (v18 or v19) as peer dependencies.*
-
----
-
-## 🚀 Quick Setup
-
-### 1. Wrap your Root Component
+## Quick start
 
 ```tsx
-import { WakeItProvider, WakeItBanner } from "wakeit";
+import { WakeItProvider, WakeItBanner } from "@lalit_kumar/wakeit";
 
 export default function App() {
   return (
-    <WakeItProvider healthEndpoint="https://your-api.onrender.com/api/health">
-      <YourAppRoutes />
+    <WakeItProvider
+      healthEndpoint="https://your-api.onrender.com/api/health"
+      config={{ platform: "render" }}
+    >
+      <YourRoutes />
       <WakeItBanner />
     </WakeItProvider>
   );
 }
 ```
 
-### 2. Use the Hook in Any Component (Optional)
+Your backend needs a cheap `GET` endpoint that returns a 2xx status, and CORS must allow your front end's origin.
+
+### Disable controls until the server is ready
 
 ```tsx
-import { useWakeIt } from "wakeit";
+import { useWakeIt } from "@lalit_kumar/wakeit";
 
-function PlayButton() {
-  const { isReady, isWarming, responseTimeMs } = useWakeIt();
-
+function SaveButton() {
+  const { isReady, isWarming } = useWakeIt();
   return (
-    <button disabled={isWarming}>
-      {isWarming ? "Server starting..." : "Start Game"}
+    <button disabled={!isReady}>
+      {isWarming ? "Server starting..." : "Save"}
     </button>
   );
 }
 ```
 
----
+### Start the boot even earlier
 
-## ⚙️ Configuration (`WakeItConfig`)
+`prewarm()` works without React. Call it from a landing page, or when the user hovers a link that leads into the app.
 
-Customize behavior globally via the `config` prop or `defaultWakeItConfig`:
+```ts
+import { prewarm } from "@lalit_kumar/wakeit";
 
-```typescript
-import { WakeItProvider, type WakeItConfig } from "wakeit";
-
-const customConfig: WakeItConfig = {
-  // Health check endpoint
-  healthEndpoint: "https://your-api.onrender.com/api/health",
-
-  // Screen placement: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'bottom-center' | 'top-center'
-  position: "bottom-right",
-
-  // Visual Toggles
-  showBannerOnWarmup: true,   // Show yellow 'Waking up server...' banner
-  showSuccessToast: true,     // Show green 'Server Warm & Ready!' toast
-  showBannerOnError: false,   // Set true to show red alert banner on health check failure
-
-  // Retries & Timing
-  maxRetries: 3,              // Number of retries (or 'endless' for continuous auto-retries)
-  retryIntervalMs: 5000,      // Delay between retry attempts (ms)
-  bootWindowMs: 90000,        // Keep retrying this long (ms) while server answers 502/503/504 (still booting)
-  showBannerDelayMs: 1500,    // Delay threshold before popping up banner (ms)
-  timeoutMs: 65000,           // Request timeout before aborting ping (ms)
-  autoHideMs: 4000,           // Duration before success toast auto-hides (ms)
-  cacheTtlMs: 14 * 60 * 1000, // localStorage cache duration (14 minutes)
-
-  // Custom UI Messages
-  messages: {
-    warming: "Waking up server...",
-    warmingSubtext: "Render cold-start in progress (~30-50s). UI is ready!",
-    ready: "Server Warm & Ready!",
-    error: "Server connection delayed",
-    errorSubtext: "Click retry to ping backend.",
-    retryButtonText: "Retry",
-  },
-};
+loginLink.addEventListener("pointerenter", () => {
+  prewarm("https://your-api.onrender.com/api/health");
+});
 ```
 
----
+## How it behaves
 
-## 📄 License
+1. **Probe on mount.** The provider sends `GET healthEndpoint`.
+2. **Fast reply (under 1.5 s by default).** Nothing is shown.
+3. **Slow reply.** After 1.5 s the status becomes `warming` and the badge appears. When the server answers, a short "ready" message is shown.
+4. **502, 503 or 504.** Some platforms return these while the container boots. WakeIt treats them as "still booting" and keeps polling, at most every 5 s, for up to `bootWindowMs`.
+5. **Other failures.** Retried up to `maxRetries` times with exponential back-off and jitter.
+6. **Warm cache.** A successful probe is remembered in `localStorage`, per endpoint. On the next page load the UI starts as `ready`, and one background probe confirms it. If that probe is slow, the state drops back to `warming`.
 
-MIT © wakeit
+## Configuration
+
+| Option | Default | Meaning |
+|---|---|---|
+| `healthEndpoint` | `"/api/health"` | URL to probe. |
+| `platform` | `"custom"` | `render`, `railway`, `fly`, `koyeb`, `heroku` or `custom`. Sets the warm-cache lifetime below that platform's idle timeout. |
+| `cacheTtlMs` | from `platform` | Warm-cache lifetime. Overrides the preset. |
+| `verifyCachedState` | `true` | Confirm a cached warm state with one background probe. `false` trusts the cache and sends nothing. |
+| `showBannerDelayMs` | `1500` | Wait this long before showing the badge. |
+| `timeoutMs` | `65000` | Abort one probe after this long. |
+| `maxRetries` | `3` | Retries after a real failure. A number or `"endless"`. |
+| `retryIntervalMs` | `2000` | Base retry delay. |
+| `retryBackoff` | `"exponential"` | `"exponential"` (with jitter) or `"fixed"`. |
+| `retryMaxIntervalMs` | `15000` | Upper limit for one retry delay. |
+| `bootWindowMs` | `90000` | How long 502/503/504 count as "still booting". |
+| `showBannerOnWarmup` | `true` | Show the badge while warming. |
+| `showSuccessToast` | `true` | Show the "ready" message after a slow start. |
+| `showBannerOnError` | `false` | Show the error badge with a Retry button. |
+| `autoHideMs` | `4000` | Hide the "ready" message after this long. `0` keeps it. |
+| `position` | `"bottom-right"` | One of six screen positions. |
+| `debug` | `false` | Log to the console. |
+| `onEvent` | none | Receives timestamped lifecycle events. |
+| `messages` | English text | Override any label. |
+
+Warm-cache lifetime per platform preset:
+
+| Preset | Cache lifetime | Documented idle timeout |
+|---|---|---|
+| `render` | 14 min | 15 min without inbound traffic |
+| `railway` | 4 min | about 5 min without outbound traffic |
+| `fly` | 2 min | not stated exactly; the proxy checks every few minutes |
+| `koyeb` | 55 min | 1 hour without traffic (free instance) |
+| `heroku` | 28 min | 30 min without web traffic (Eco dynos) |
+| `custom` | 14 min | set `cacheTtlMs` yourself |
+
+Providers change these values. Check the provider's documentation for your plan.
+
+## `useWakeIt()`
+
+| Field | Type | Meaning |
+|---|---|---|
+| `status` | `"idle" \| "checking" \| "warming" \| "ready" \| "error"` | Current state. |
+| `isReady`, `isWarming` | `boolean` | Shortcuts. |
+| `responseTimeMs` | `number \| null` | Time until the server answered. |
+| `retryCount` | `number` | Retries so far. |
+| `bannerVisible` | `boolean` | Whether the badge is shown. |
+| `announcement` | `string` | Text sent to screen readers. |
+| `checkBackend(force?)` | function | Probe again. |
+| `dismissBanner()` | function | Hide the badge. |
+
+## Events
+
+`onEvent` receives objects with `type`, `t` (from `performance.now()`), `wallTime`, `endpoint` and, depending on the type, `status`, `httpStatus`, `elapsedMs`, `attempt`, `delayMs` and `background`. Types: `probe_start`, `first_byte`, `status_change`, `retry_scheduled`, `ready`, `error`.
+
+## Theming
+
+Set CSS custom properties on any ancestor of the badge:
+
+```css
+:root {
+  --wakeit-bg: #ffffff;
+  --wakeit-fg: #18181b;
+  --wakeit-muted: #52525b;
+  --wakeit-border: #e4e4e7;
+  --wakeit-warming: #b45309;
+  --wakeit-ready: #047857;
+  --wakeit-error: #be123c;
+  --wakeit-button-bg: #f4f4f5;
+}
+```
+
+## Accessibility
+
+- A visually hidden `role="status"` region announces "waking up", "ready" and error messages. A fast server produces no announcement.
+- Buttons are real `<button>` elements with accessible names and a visible focus ring.
+- Animations stop when the user has asked for reduced motion.
+
+## Limits
+
+- WakeIt cannot shorten the boot. A user who acts the instant the page loads still waits for it.
+- The backend needs a reachable health endpoint with CORS enabled.
+- A probe is a real request. It wakes a sleeping server, which uses free-tier hours just as a normal visit would.
+
+## Development
+
+```bash
+npm install
+npm test               # unit tests
+npm run test:coverage  # with coverage
+npm run build          # ESM + CJS + types into dist/
+npm run smoke          # load the build under Node ESM and CJS
+npm run size           # minified + gzipped size
+```
+
+`example/server` is a cold-start simulator. `example/vite_demo` is a demo app. `bench/` holds the measurement tools used for the paper.
+
+## License
+
+MIT

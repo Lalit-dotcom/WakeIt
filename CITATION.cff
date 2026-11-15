@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "WakeIt: client-side pre-warming for scale-to-zero backends"
+type: software
+authors:
+  - family-names: Kumar
+    given-names: Lalit
+    affiliation: "Dronacharya College of Engineering, Gurugram, India"
+  - family-names: Bhardwaj
+    given-names: Nikhil
+    affiliation: "Dronacharya College of Engineering, Gurugram, India"
+version: 1.1.0
+license: MIT
+repository-code: "https://github.com/Lalit-dotcom/WakeIt"
+url: "https://www.npmjs.com/package/@lalit_kumar/wakeit"
+# After the Zenodo release, add:
+# doi: 10.5281/zenodo.XXXXXXX
+# date-released: YYYY-MM-DD
