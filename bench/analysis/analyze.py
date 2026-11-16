@@ -41,6 +41,8 @@ S = {}
 # ---------------- E1 / E2: cold starts ----------------
 c = pd.read_csv(os.path.join(RES, "coldstart.csv"))
 c["region"] = c["region"].str.capitalize()
+# Sessions are named night1, day1, night2, ...; group them by time of day.
+c["session"] = np.where(c["session"].str.startswith("night"), "night1", "day1")
 S["e1_rows"] = int(len(c))
 failed = c[c.cold_ok == 0]
 answered = c[c.cold_ok == 1].copy()
