@@ -10,7 +10,7 @@ WakeIt does **not** make the server boot faster. It overlaps the boot with the t
 
 - No runtime dependencies. React 18 or 19 is the only peer dependency.
 - No CSS framework needed: the badge is styled inline.
-- About 4.4 kB minified and gzipped.
+- About 4.3 kB minified and gzipped.
 - Screen-reader announcements through an ARIA live region.
 - Ships as ESM and CommonJS with TypeScript types.
 

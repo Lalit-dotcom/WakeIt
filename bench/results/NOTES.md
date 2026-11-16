@@ -6,8 +6,8 @@
 - **Start time:** about 19:40 IST (both runs started together, in two VS Code terminals)
 - **Expected finish:** E1 about 23:15 IST, E3 about 03:00 IST (16 Nov)
 - **Vantage:** india-laptop
-- **Network:** Wi-Fi "Hemant" (advertised speed: TODO)
-- **Laptop model / Windows version:** TODO (Windows 11 Home Single Language, build 26200)
+- **Network:** home broadband (Airtel) over Wi-Fi 5 (802.11ac), 5 GHz band, link speed 433 Mbps. The broadband plan speed was not recorded.
+- **Laptop:** Intel Core i5-1155G7 (11th gen), 8 GB RAM, Intel Iris Xe graphics; Windows 11 Home Single Language, build 26200. Make and model not recorded.
 - **Backends:** Render Free, see bench/DEPLOYED.md (deployed 15 Nov 2026, $0 spent)
 - **Sleep:** standby and hibernate on AC disabled with powercfg before the start
 
@@ -30,3 +30,8 @@
 - Finished about 13:50 IST, 16 Nov (last row render-singapore cycle 10, 08:18 UTC). 20/20 rows.
 - Valid cold starts after excluding the 2 timeouts and day1 Singapore cycle 3:
   Singapore 17 (night 10 + day 7), Oregon 20 (night 10 + day 10).
+
+## After the runs
+
+- The a11y check in `artifact-checks.txt` reported one colour-contrast violation in the warming state. Cause: the fading title text. Fixed in the library after the runs (see CHANGELOG); the experiment data are not affected, because the fading only changed how the title looked.
+- Analysis: `python3 bench/analysis/analyze.py` writes `bench/analysis/out/summary.json` and the three figures.

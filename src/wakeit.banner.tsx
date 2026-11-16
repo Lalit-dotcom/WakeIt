@@ -20,12 +20,10 @@ const positionStyles: Record<WakeItBannerPosition, CSSProperties> = {
 
 const KEYFRAMES = `
 @keyframes wakeit-spin { to { transform: rotate(360deg); } }
-@keyframes wakeit-pulse { 50% { opacity: .45; } }
 .wakeit-spin { animation: wakeit-spin 1s linear infinite; transform-origin: center; }
-.wakeit-pulse { animation: wakeit-pulse 1.6s ease-in-out infinite; }
 .wakeit-btn:focus-visible { outline: 2px solid var(--wakeit-fg, #f4f4f5); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
-  .wakeit-spin, .wakeit-pulse { animation: none; }
+  .wakeit-spin { animation: none; }
 }`;
 
 const visuallyHidden: CSSProperties = {
@@ -182,10 +180,7 @@ export function WakeItBanner() {
                   <path d="M21 12a9 9 0 1 1-6.2-8.56" />
                 </Icon>
                 <div style={{ flex: 1 }}>
-                  <p
-                    className="wakeit-pulse"
-                    style={{ ...titleStyle, color: WARMING }}
-                  >
+                  <p style={{ ...titleStyle, color: WARMING }}>
                     {msgs.warming || "Waking up server..."}
                   </p>
                   <p style={subStyle}>
