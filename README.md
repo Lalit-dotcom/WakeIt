@@ -1,5 +1,7 @@
 # WakeIt
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24299376.svg)](https://doi.org/10.5281/zenodo.24299376)
+
 **WakeIt** is a small React library for apps whose backend goes to sleep when idle (Render free tier, Railway Serverless, Fly.io auto-stop, Koyeb free instance, Heroku Eco).
 
 When the page loads, WakeIt sends one request to your health endpoint. This starts the server's boot early, while the user is still reading the page. If the server is slow to answer, WakeIt shows a small status badge and lets you keep buttons disabled until the backend is ready.
@@ -169,6 +171,10 @@ npm run size           # minified + gzipped size
 ```
 
 `example/server` is a cold-start simulator. `example/vite_demo` is a demo app. `bench/` holds the measurement tools used for the paper.
+
+## Citing
+
+If you use WakeIt in research, please cite version 1.1.0 as archived on Zenodo: [doi:10.5281/zenodo.24299376](https://doi.org/10.5281/zenodo.24299376). To cite every version together, use the concept DOI [10.5281/zenodo.24299374](https://doi.org/10.5281/zenodo.24299374). GitHub's "Cite this repository" button reads the same details from `CITATION.cff`.
 
 ## License
 

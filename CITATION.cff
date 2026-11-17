@@ -13,6 +13,5 @@ version: 1.1.0
 license: MIT
 repository-code: "https://github.com/Lalit-dotcom/WakeIt"
 url: "https://www.npmjs.com/package/@lalit_kumar/wakeit"
-# After the Zenodo release, add:
-# doi: 10.5281/zenodo.XXXXXXX
-# date-released: YYYY-MM-DD
+doi: 10.5281/zenodo.24299376
+date-released: 2026-11-17
