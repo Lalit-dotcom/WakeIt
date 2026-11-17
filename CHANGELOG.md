@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.1
+
+### Fixed
+- The "waking up" title no longer fades in and out. At its faintest point the fading text failed the WCAG AA colour-contrast check; only the icon is animated now.
+
+### Added
+- `bench/analysis/`: the analysis script, summary and figures for the Render cold-start study.
+
 ## 1.1.0
 
 ### Fixed
@@ -7,7 +15,6 @@
 - A cached "warm" state could report `ready` while the server was asleep, because the cache was trusted without any request. The cached state is now confirmed by one background probe (`verifyCachedState`, on by default).
 - The warm cache was shared by every endpoint on the same origin. It is now stored per endpoint.
 - Unmounting during a probe or a pending retry no longer leaves requests or timers running.
-- The "waking up" title no longer fades in and out. At its faintest point the fading text failed the WCAG AA colour-contrast check; only the icon is animated now.
 
 ### Changed
 - No runtime dependencies. `lucide-react` is removed and the banner no longer needs Tailwind CSS. Icons are inline SVG and styles are inline, themeable with CSS custom properties.

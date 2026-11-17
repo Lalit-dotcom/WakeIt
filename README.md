@@ -1,6 +1,6 @@
 # WakeIt
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24299376.svg)](https://doi.org/10.5281/zenodo.24299376)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24299374.svg)](https://doi.org/10.5281/zenodo.24299374)
 
 **WakeIt** is a small React library for apps whose backend goes to sleep when idle (Render free tier, Railway Serverless, Fly.io auto-stop, Koyeb free instance, Heroku Eco).
 
@@ -174,7 +174,7 @@ npm run size           # minified + gzipped size
 
 ## Citing
 
-If you use WakeIt in research, please cite version 1.1.0 as archived on Zenodo: [doi:10.5281/zenodo.24299376](https://doi.org/10.5281/zenodo.24299376). To cite every version together, use the concept DOI [10.5281/zenodo.24299374](https://doi.org/10.5281/zenodo.24299374). GitHub's "Cite this repository" button reads the same details from `CITATION.cff`.
+If you use WakeIt in research, please cite it through Zenodo. Version 1.1.0 is [doi:10.5281/zenodo.24299376](https://doi.org/10.5281/zenodo.24299376); to cite every version together (including later ones such as 1.1.1), use the concept DOI [10.5281/zenodo.24299374](https://doi.org/10.5281/zenodo.24299374). GitHub's "Cite this repository" button reads the same details from `CITATION.cff`.
 
 ## License
 

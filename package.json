@@ -1,6 +1,6 @@
 {
   "name": "@lalit_kumar/wakeit",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A small React library with no runtime dependencies that pre-warms a sleeping backend and tells the user what is happening. For scale-to-zero hosts such as Render, Railway, Fly.io, Koyeb and Heroku.",
   "type": "module",
   "main": "./dist/index.cjs",

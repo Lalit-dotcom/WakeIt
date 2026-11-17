@@ -9,9 +9,10 @@ authors:
   - family-names: Bhardwaj
     given-names: Nikhil
     affiliation: "Dronacharya College of Engineering, Gurugram, India"
-version: 1.1.0
+version: 1.1.1
 license: MIT
 repository-code: "https://github.com/Lalit-dotcom/WakeIt"
 url: "https://www.npmjs.com/package/@lalit_kumar/wakeit"
-doi: 10.5281/zenodo.24299376
+# Concept DOI: always resolves to the latest version.
+doi: 10.5281/zenodo.24299374
 date-released: 2026-11-17
