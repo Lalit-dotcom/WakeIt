@@ -1,0 +1,107 @@
+# E6 library checks, 2026-11-16 13:50 IST, node v22.16.0
+
+===== npm run test:coverage
+
+> @lalit_kumar/wakeit@1.1.0 test:coverage
+> vitest run --coverage
+
+
+ RUN  v5.1.0 C:/Users/lalit/Downloads/WakeIt_v1.1.0_handover/WakeIt
+      Coverage enabled with v8
+
+
+ Test Files  1 passed (1)
+      Tests  31 passed (31)
+   Start at  13:50:15
+   Duration  18.28s (environment 52%, import 26%, tests 16%, transform 5%, worker 1%)
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   96.19 |    77.21 |   97.22 |   98.31 |                   
+ wakeit.banner.tsx |     100 |    68.96 |     100 |     100 | ...92,207,225-241 
+ ...it.context.tsx |   98.97 |    79.04 |     100 |     100 | ...80,304-312,332 
+ wakeit.core.ts    |   81.81 |       75 |      90 |   88.57 | 25,39-41          
+-------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 96.19% ( 253/263 )
+Branches     : 77.21% ( 122/158 )
+Functions    : 97.22% ( 35/36 )
+Lines        : 98.31% ( 233/237 )
+================================================================================
+[exit 0]
+
+===== npm run build
+
+> @lalit_kumar/wakeit@1.1.0 build
+> tsup
+
+[34mCLI[39m Building entry: src/index.ts
+[34mCLI[39m Using tsconfig: tsconfig.json
+[34mCLI[39m tsup v9.0.0
+[34mCLI[39m Using tsup config: C:\Users\lalit\Downloads\WakeIt_v1.1.0_handover\WakeIt\tsup.config.ts
+[34mCLI[39m Target: es2020
+[34mCLI[39m Cleaning output folder
+[34mESM[39m Build start
+[34mCJS[39m Build start
+[32mCJS[39m [1mdist\index.cjs     [22m[32m22.63 KB[39m
+[32mCJS[39m [1mdist\index.cjs.map [22m[32m43.43 KB[39m
+[32mCJS[39m ⚡️ Build success in 305ms
+[32mESM[39m [1mdist\index.js     [22m[32m20.05 KB[39m
+[32mESM[39m [1mdist\index.js.map [22m[32m42.91 KB[39m
+[32mESM[39m ⚡️ Build success in 308ms
+[34mDTS[39m Build start
+[32mDTS[39m ⚡️ Build success in 4110ms
+[32mDTS[39m [1mdist\index.d.ts  [22m[32m8.48 KB[39m
+[32mDTS[39m [1mdist\index.d.cts [22m[32m8.48 KB[39m
+[exit 0]
+
+===== npm run smoke
+
+> @lalit_kumar/wakeit@1.1.0 smoke
+> node scripts/smoke.mjs
+
+ESM build OK (9 exports)
+CJS build OK (9 exports)
+[exit 0]
+
+===== npm run size
+
+> @lalit_kumar/wakeit@1.1.0 size
+> node scripts/size.mjs
+
+{"entry":"src/index.ts","thirdPartyCodeIncluded":false,"minifiedBytes":10183,"gzipBytes":4365}
+[exit 0]
+
+===== node bench/a11y-check.mjs
+[
+  {
+    "state": "warming",
+    "rulesPassed": 18,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": 1,
+        "help": "Elements must meet minimum color contrast ratio thresholds"
+      }
+    ],
+    "liveRegionText": "Waking up server... The server is starting. This can take up to a minute on free hosting."
+  },
+  {
+    "state": "ready",
+    "rulesPassed": 18,
+    "violations": [],
+    "liveRegionText": "Server Warm & Ready!"
+  },
+  {
+    "state": "error",
+    "rulesPassed": 18,
+    "violations": [],
+    "liveRegionText": "Server connection delayed"
+  }
+]
+1 violation type(s) found.
+[exit 1]
