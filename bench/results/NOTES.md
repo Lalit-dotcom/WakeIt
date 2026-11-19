@@ -31,7 +31,16 @@
 - Valid cold starts after excluding the 2 timeouts and day1 Singapore cycle 3:
   Singapore 17 (night 10 + day 7), Oregon 20 (night 10 + day 10).
 
+## Client B (second laptop, Nikhil Bhardwaj)
+
+- **Files:** `coldstart.nikhil.csv` (40 rows) and `e3.nikhil.csv` (40 rows), vantage `nikhil-laptop`; his own notes are in `NOTES.nikhil.md`. Rows kept as received, not edited.
+- **Network:** mobile hotspot, a different network from client A. Responses came mostly through the Cloudflare edge in Mumbai (BOM 36, MAA 2, DEL 1 of 39 cold starts that reported it).
+- **Laptop:** Intel Core i5-12450H, 16 GB RAM.
+- **Sessions:** first requests 15:32 to 18:36 IST on 17 Nov (typed label `night1`, although it ran in the afternoon) and 12:49 to 15:53 IST on 18 Nov (`day1`). E3 ran 15:32 to 22:03 IST on 17 Nov.
+- **Incidents:** 18 Nov, Oregon, cycle 4: the first request was reset (ECONNRESET) and the retry succeeded; counted with its full duration (31.8 s). All 40 rows are cold starts (38 boot_id_changed, 2 uptime).
+- **Naming in the paper:** client A = india-laptop, client B = nikhil-laptop. Because the typed labels do not match the clock, `analyze.py` names each session by client and date (A, 15 Nov; A, 16 Nov; B, 17 Nov; B, 18 Nov).
+
 ## After the runs
 
 - The a11y check in `artifact-checks.txt` reported one colour-contrast violation in the warming state. Cause: the fading title text. Fixed in the library after the runs (see CHANGELOG); the experiment data are not affected, because the fading only changed how the title looked.
-- Analysis: `python3 bench/analysis/analyze.py` writes `bench/analysis/out/summary.json` and the three figures.
+- Analysis: `python3 bench/analysis/analyze.py` reads every `coldstart*.csv` and `e3*.csv` in this folder and writes `bench/analysis/out/summary.json` and the three figures.

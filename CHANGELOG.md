@@ -1,5 +1,13 @@
 # Changelog
 
+## Data update, 19 November 2026 (no library change)
+
+### Added
+- `bench/results/coldstart.nikhil.csv`, `e3.nikhil.csv` and `NOTES.nikhil.md`: a second client on a different network (17 and 18 Nov 2026).
+
+### Changed
+- `bench/analysis/analyze.py` reads both clients, names sessions by client and date, finds cold-start levels from gaps in the sorted durations, and reports WakeIt results overall and per client.
+
 ## 1.1.1
 
 ### Fixed
